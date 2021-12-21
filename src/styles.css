@@ -1,0 +1,74 @@
+.ionhead {
+ position: fixed;
+ top: 0;
+ left: 0;
+ z-index: 100;
+}
+
+.tab {
+ position: fixed;
+ left: 0;
+ bottom: 0;
+}
+
+.foot {
+ position: fixed;
+ left: 0;
+ bottom: 0;
+ right: 0;
+ padding: 5px 5px 5px 5px;
+ border-bottom: 50px;
+ z-index: 100;
+ text-align: center;
+ display: flex;
+}
+.foot2 {
+ position: fixed;
+ left: 0;
+ bottom: 56px;
+ right: 0;
+ padding: 5px 5px 5px 5px;
+ border-bottom: 50px;
+ z-index: 100;
+ text-align: center;
+}
+.foot {
+ padding: 10px 5px 5px 5px;
+ border-bottom: 50px;
+
+ text-align: center;
+ display: flex;
+}
+
+.label {
+ text-align: center;
+ margin-top: 10px;
+}
+
+.phide {
+ display: none;
+}
+
+.noselect {
+ -webkit-touch-callout: none; /* iOS Safari */
+ -webkit-user-select: none; /* Safari */
+ -khtml-user-select: none; /* Konqueror HTML */
+ -moz-user-select: none; /* Old versions of Firefox */
+ -ms-user-select: none; /* Internet Explorer/Edge */
+ user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+
+ -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+@media screen and (max-height: 500px) {
+ .landscape {
+  position: static;
+ }
+ .lhide {
+  display: none;
+ }
+ .phide {
+  display: block;
+ }
+}

@@ -1,0 +1,13 @@
+{
+	"appId": "com.rahulkudum.vaisnava_songs",
+	"appName": "Vaisnava Songs",
+	"bundledWebRuntime": false,
+	"npmClient": "npm",
+	"webDir": "build",
+	"plugins": {
+		"SplashScreen": {
+			"launchAutoHide": false
+		}
+	},
+	"cordova": {}
+}
