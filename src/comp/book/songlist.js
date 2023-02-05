@@ -3,7 +3,8 @@ import Song from "./song";
 import { BookContent, Colour, FontType } from "../global";
 import { Switch, Route, useHistory, useParams, useRouteMatch, useLocation } from "react-router-dom";
 import { IonItem, IonLabel, IonToolbar, IonButtons, IonButton } from "@ionic/react";
-import { ArrowBackSharp } from "@material-ui/icons";
+import { ArrowBackSharp } from "@mui/icons-material";
+import { AnimatePresence, motion } from "framer-motion";
 
 function Sub(props) {
  let { songid } = useParams();
@@ -27,7 +28,7 @@ function Sub(props) {
  }, [location]);
 
  return (
-  <>
+  <AnimatePresence onExitComplete>
    <Switch location={location}>
     <Route exact path={path}>
      <IonToolbar className="ionhead" color={clr ? "warning" : "primary"}>
@@ -44,25 +45,27 @@ function Sub(props) {
        </IonLabel>
       </IonButtons>
      </IonToolbar>
-     <div style={{ height: "58px" }}></div>
-     {content[props.title].chap[id].song.map((td, i) => {
-      function next() {
-       setSpos(window.scrollY);
-       history.push(`${url}/${i}`);
-      }
-      return (
-       <IonItem color={clr} button onClick={next}>
-        <IonLabel style={{ fontFamily: `${fon}` }}>{td.name}</IonLabel>
-       </IonItem>
-      );
-     })}
-     <div style={{ height: "56px" }}></div>
+     <motion.div exit={{ opacity: 0 }} animate={{ opacity: 1 }} initial={{ opacity: 0 }} transition={{ type: "linear", duration: 1 }}>
+      <div style={{ height: "58px" }}></div>
+      {content[props.title].chap[id].song.map((td, i) => {
+       function next() {
+        setSpos(window.scrollY);
+        history.push(`${url}/${i}`);
+       }
+       return (
+        <IonItem color={clr} button onClick={next}>
+         <IonLabel style={{ fontFamily: `${fon}` }}>{td.name}</IonLabel>
+        </IonItem>
+       );
+      })}
+      <div style={{ height: "56px" }}></div>
+     </motion.div>
     </Route>
     <Route path={`${path}/:songid`}>
      <Song i1={props.title} i2={id} />
     </Route>
    </Switch>
-  </>
+  </AnimatePresence>
  );
 }
 

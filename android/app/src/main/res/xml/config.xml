@@ -2,15 +2,8 @@
 <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <access origin="*" />
   
-  <feature name="BackgroundMode">
-    <param name="android-package" value="de.appplant.cordova.plugin.background.BackgroundMode"/>
-  </feature>
-  <feature name="BackgroundModeExt">
-    <param name="android-package" value="de.appplant.cordova.plugin.background.BackgroundModeExt"/>
-  </feature>
-
-  <feature name="Badge">
-    <param name="android-package" value="de.appplant.cordova.plugin.badge.Badge"/>
+  <feature name="LaunchReview">
+    <param name="android-package" value="uk.co.workingedge.phonegap.plugin.LaunchReview"/>
   </feature>
 
   <feature name="Device">
@@ -22,21 +15,17 @@
     <param name="onload" value="true"/>
   </feature>
 
-  <feature name="FileChooser">
-    <param name="android-package" value="com.megster.cordova.FileChooser"/>
-  </feature>
-
-  <feature name="FilePath">
-    <param name="android-package" value="com.hiddentao.cordova.filepath.FilePath"/>
-    <param name="onload" value="true"/>
-  </feature>
-
   <feature name="Insomnia">
     <param name="android-package" value="nl.xservices.plugins.Insomnia"/>
   </feature>
 
   <feature name="Media">
     <param name="android-package" value="org.apache.cordova.media.AudioHandler"/>
+  </feature>
+
+  <feature name="StatusBar">
+    <param name="android-package" value="org.apache.cordova.statusbar.StatusBar"/>
+    <param name="onload" value="true"/>
   </feature>
 
   <feature name="Downloader">

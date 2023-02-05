@@ -1,17 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
-import { BookMark, Colour, Dbookmark, FontType, Bplay } from "../global";
+import { BookMark, Colour, Dbookmark, FontType, Bplay, Hindit, IskconContent } from "../global";
 import { IonItem, IonReorderGroup, IonButton, IonLabel, IonToolbar, IonButtons, IonCheckbox, IonReorder } from "@ionic/react";
-import { ArrowBackSharp, TocSharp, IndeterminateCheckBoxOutlined, PlaylistPlay } from "@material-ui/icons";
+import { ArrowBackSharp, TocSharp, IndeterminateCheckBoxOutlined, PlaylistPlay } from "@mui/icons-material";
 import { useHistory, useParams } from "react-router-dom";
 
-function Bsub(props) {
+function Bsub() {
  const [bookMark, dispatch2] = useContext(BookMark);
 
  let { ind } = useParams();
  let nind = Number(ind);
 
  let history = useHistory();
- let bplaySwitch = props.value;
+
  let [dbookmark, setDbookmark] = useContext(Dbookmark);
  const [font, setFont] = useContext(FontType);
  const [bplay, setBplay] = useContext(Bplay);
@@ -23,6 +23,8 @@ function Bsub(props) {
 
  let [reo, setReo] = useState(true);
  let [clr, setClr] = useContext(Colour);
+ const [hindit, setHindi] = useContext(Hindit);
+ const [iskcon, setIskcon] = useContext(IskconContent);
 
  useEffect(() => {
   if (bplay.fold) {
@@ -64,33 +66,14 @@ function Bsub(props) {
  return (
   <div>
    <IonToolbar className="ionhead" color={clr ? "warning" : "primary"}>
-    <IonButtons slot="start" onClick={() => history.goBack()}>
+    <IonButtons slot="start" onClick={() => history.push("/bookmarks")}>
      <IonButton>
       <ArrowBackSharp />
      </IonButton>
     </IonButtons>
     <IonButtons slot="start">
-     <IonLabel style={{ fontFamily: `${fon}` }}>{bookMark[nind].name} </IonLabel>
+     <IonLabel style={{ fontFamily: `${fon}` }}>{bookMark[nind].name ?? "Default"} </IonLabel>
     </IonButtons>
-
-    {!select ? (
-     <IonButtons
-      slot="end"
-      onClick={() => {
-       for (let j in bookMark[nind].songs) {
-        if (bookMark[nind].songs[j].path.indexOf("iskcon") !== -1) {
-         setBplay({ fold: nind + 1, song: j });
-         history.push(bookMark[nind].songs[j].path);
-         break;
-        }
-       }
-      }}
-     >
-      <IonButton>
-       <PlaylistPlay />
-      </IonButton>
-     </IonButtons>
-    ) : null}
 
     {!select ? (
      <IonButtons slot="end" onClick={() => setReo(!reo)}>
@@ -146,17 +129,26 @@ function Bsub(props) {
    <div style={{ height: "58px" }}></div>
    <IonReorderGroup disabled={reo} onIonItemReorder={doReorder}>
     {bookMark[nind].songs.map((ele, i) => {
+     let hname;
+     if (hindit) {
+      for (let j in iskcon.songs) {
+       if (iskcon.songs[j].name === ele.name) {
+        hname = iskcon.songs[j].hindi;
+        break;
+       }
+      }
+     }
      return (
       <IonItem
        color={clr}
        onClick={() => {
         if (!select) {
-         if (bplaySwitch && ele.path.indexOf("iskcon") !== -1) setBplay({ fold: nind + 1, song: i });
+         setBplay({ fold: 0, song: 0 });
          history.push(ele.path);
         }
        }}
       >
-       <IonLabel style={{ fontFamily: `${fon}` }}>{ele.name} </IonLabel>
+       <IonLabel style={{ fontFamily: `${fon}` }}>{hname ?? ele.name} </IonLabel>
        <IonReorder slot="end" />
        {select ? (
         <IonCheckbox
@@ -166,7 +158,22 @@ function Bsub(props) {
          }}
         />
        ) : (
-        <p></p>
+        <>
+         {ele.path.indexOf("iskcon") !== -1 ? (
+          <IonButtons
+           slot="end"
+           onClick={(e) => {
+            setBplay({ fold: nind + 1, song: i });
+            history.push(ele.path);
+            e.stopPropagation();
+           }}
+          >
+           <IonButton color={clr ? "warning" : "primary"}>
+            <PlaylistPlay style={{ fontSize: "30px" }} />
+           </IonButton>
+          </IonButtons>
+         ) : null}
+        </>
        )}
       </IonItem>
      );

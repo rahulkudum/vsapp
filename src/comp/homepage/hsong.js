@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { BookMark, IskconContent, Playlist, BookContent, Mediap, Tsize, View, Colour, FontType, Aos, Bplay } from "../global";
+import { BookMark, IskconContent, BookContent, Mediap, Tsize, View, Colour, FontType, Aos, Controls, Bplay, Repeat, Hindit } from "../global";
 import { useHistory, useParams } from "react-router-dom";
 import ScrollToTop from "../scroll";
+import { motion } from "framer-motion";
 import {
  IonActionSheet,
  IonButton,
@@ -12,16 +13,14 @@ import {
  IonCard,
  IonCardContent,
  IonToast,
- IonItem,
  IonFab,
  IonFabList,
  IonFabButton,
  IonIcon,
 } from "@ionic/react";
-import { settings, logoVimeo, chevronBackCircle } from "ionicons/icons";
+import { chevronBackOutline } from "ionicons/icons";
 import {
  PlayCircleOutline,
- RepeatOneSharp,
  PauseCircleOutline,
  Person,
  FastForwardSharp,
@@ -30,8 +29,11 @@ import {
  ViewHeadlineSharp,
  MenuBookSharp,
  ArrowBackSharp,
- MoreVert,
-} from "@material-ui/icons";
+ BookmarkAdd,
+ SettingsSharp,
+ CloudDownloadSharp,
+ CloudDoneSharp,
+} from "@mui/icons-material";
 
 import Slider from "@material-ui/core/Slider";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -39,18 +41,14 @@ import { makeStyles } from "@material-ui/core/styles";
 import { Downloader } from "@ionic-native/downloader";
 import { Media } from "@ionic-native/media";
 import { Insomnia } from "@awesome-cordova-plugins/insomnia";
-import { Menu } from "@material-ui/core";
-import { useLocal } from "../lshooks";
 
 function Csong(props) {
  const [showActionSheet, setShowActionSheet] = useState(false);
 
- const [showAlert, setShowAlert] = useState(false);
- const [showAlert2, setShowAlert2] = useState(false);
  const [showAlert3, setShowAlert3] = useState(false);
  const [showAlert4, setShowAlert4] = useState(false);
  const content = useContext(BookContent);
- const [repeat, setRepeat] = useLocal("rb2", "yes");
+ const [repeat, setRepeat] = useContext(Repeat);
  const [file2, setFile2] = useContext(Mediap);
  const [tsize, setTsize] = useContext(Tsize);
  const [view, setView] = useContext(View);
@@ -58,6 +56,7 @@ function Csong(props) {
  const [font, setFont] = useContext(FontType);
  const [fabClose, setFabClose] = useState(true);
  const [bplay, setBplay] = useContext(Bplay);
+ const [controls, setControls] = useContext(Controls);
 
  let fon;
  if (!font) fon = "Calibri";
@@ -108,37 +107,33 @@ function Csong(props) {
  const [file, setFile] = props.value;
  const [duration, setDuration] = useState();
  const [cposition, setCposition] = useState(0);
- const [playList, dispatch] = useContext(Playlist);
  const [bookMark, dispatch2] = useContext(BookMark);
- const [anchorEl, setAnchorEl] = useState(null);
  const [devi, setDevi] = useState(iskcon.songs[nind].dflink);
  const [clr, setClr] = useContext(Colour);
+ const [hindit, setHindi] = useContext(Hindit);
  let color;
- if (clr) color = "#ffdf00";
+ if (clr) color = "#181818";
  else color = "#00CBFE";
  let color2;
- if (clr) color2 = "";
+ if (clr) color2 = "#F5F5F5";
  else color2 = "#04010f";
+ let color3;
+ if (clr) color3 = "white";
+ else color3 = "black";
  let index2 = 1;
  let present2 = 0;
  let iarr2 = [];
  let left = false;
  let wwmb;
- if (view === "3" && i1 !== undefined) wwmb = true;
+ if (view === "3" && i1 !== undefined && !hindit) wwmb = true;
  else wwmb = false;
  const [wwm, setWwm] = useState(wwmb);
 
  useEffect(() => {
-  if (aos) {
-   Insomnia.keepAwake().then(
-    () => console.log("switched on"),
-    () => console.log("error on")
-   );
+  if (aos === "true") {
+   Insomnia.keepAwake()
    return () => {
-    Insomnia.allowSleepAgain().then(
-     () => console.log("Switched off"),
-     () => console.log("error off")
-    );
+    Insomnia.allowSleepAgain()
    };
   }
  }, []);
@@ -149,27 +144,12 @@ function Csong(props) {
 
  let inputs = [];
 
- playList.map((ele) => {
-  inputs.push({
-   name: ele.name,
-   type: "radio",
-   label: ele.name,
-   value: ele.name,
-  });
- });
- inputs.push({
-  name: "New Playlist",
-  type: "radio",
-  label: "New Playlist",
-  value: "New Playlist",
- });
-
  let inputs2 = [];
  bookMark.map((ele) => {
   inputs2.push({
    name: ele.name,
    type: "radio",
-   label: ele.name,
+   label: ele.name ?? "Default",
    value: ele.name,
   });
  });
@@ -205,10 +185,14 @@ function Csong(props) {
    file.play();
    file.getCurrentPosition().then((position) => {
     if (position >= 0) {
-     if (bplay.fold) {
-      setPpb(true);
-     } else file.pause();
+     file.pause();
      setDuration(formatTime(file.getDuration().toFixed(0)));
+     if (bplay.fold) {
+      setTimeout(function () {
+       file.play();
+       setPpb(true);
+      }, 1000);
+     }
     } else {
      setDuration(0);
     }
@@ -217,8 +201,6 @@ function Csong(props) {
  }, [file]);
 
  function download() {
-  setAnchorEl(null);
-
   if (duration) {
    setToastText("Song is already Downloaded");
    setShowToast(true);
@@ -229,7 +211,7 @@ function Csong(props) {
    Downloader.download(request)
     .then((location) => {
      setShowToast(false);
-     setToastText("File downloaded, please check in Music folder/Vaishnava Songs folder");
+     setToastText("File downloaded, please check in Music folder/Vaishnava Songs folder and you can also play this song offline from the app");
      setShowToast(true);
      let diskcon = { ...iskcon };
 
@@ -263,7 +245,12 @@ function Csong(props) {
 
      if (file.getDuration() - position <= 1) {
       if (bplay.fold) {
-       history.push("/bookmarks/" + (bplay.fold - 1));
+       file.seekTo(1);
+       file.pause();
+       setPpb(false);
+       setTimeout(function () {
+        history.push("/bookmarks/" + (bplay.fold - 1));
+       }, 1000);
       } else {
        if (repeat === "yes") {
         file.seekTo(1);
@@ -304,7 +291,10 @@ function Csong(props) {
   }
  };
 
- let fun = iskcon.scontent.slice(iskcon.songs[nind].sindex, iskcon.songs[nind].lindex);
+ let fun =
+  hindit && iskcon.songs[nind].hindi
+   ? iskcon.scontent.slice(iskcon.songs[nind].hsindex, iskcon.songs[nind].hlindex)
+   : iskcon.scontent.slice(iskcon.songs[nind].sindex, iskcon.songs[nind].lindex);
 
  while (true) {
   if (fun.indexOf("(" + index.toString() + ")", present) !== -1) {
@@ -356,7 +346,7 @@ function Csong(props) {
     dele.songs.map((ele) => {
      if (ele.name === iskcon.songs[nind].name) {
       check = true;
-      setToastText("Song is already bookmark");
+      setToastText("Song is already bookmarked");
       setShowToast(true);
      }
     });
@@ -367,54 +357,6 @@ function Csong(props) {
 
    setToastText("Added to the Bookmark");
    setShowToast(true);
-  }
- }
-
- function addtoplaylist(folder) {
-  if (duration) {
-   let check = false;
-   playList.map((dele) => {
-    if (dele.name === folder) {
-     dele.songs.map((ele) => {
-      if (ele.name === iskcon.songs[nind].name + "-" + iskcon.songs[nind].link[devi].linkname) {
-       check = true;
-       setToastText("Song is already added to the playlist");
-       setShowToast(true);
-      }
-     });
-    }
-   });
-   if (!check) {
-    dispatch({
-     type: "add",
-     folder: folder,
-     name: iskcon.songs[nind].name + "-" + iskcon.songs[nind].link[devi].linkname,
-     path: "file:///storage/emulated/0/Music/Vaishnava Songs/" + iskcon.songs[nind].name + "-" + iskcon.songs[nind].link[devi].linkname + ".mp3",
-    });
-    setToastText("Added to the playlist");
-    setShowToast(true);
-   }
-  } else {
-   setToastText("Downloading started and after downloading it will added to the playlist");
-   setShowToast(true);
-
-   Downloader.download(request)
-    .then((location) => {
-     setShowToast(false);
-     setToastText("Added to the playlist");
-     setShowToast(true);
-     dispatch({
-      type: "add",
-      folder: folder,
-      name: iskcon.songs[nind].name + "-" + iskcon.songs[nind].link[devi].linkname,
-      path: "file:///storage/emulated/0/Music/Vaishnava Songs/" + iskcon.songs[nind].name + "-" + iskcon.songs[nind].link[devi].linkname + ".mp3",
-     });
-    })
-    .catch((err) => {
-     setShowToast(false);
-     setToastText("Error occured while downloading, try again later");
-     setShowToast(true);
-    });
   }
  }
 
@@ -483,31 +425,77 @@ function Csong(props) {
      </IonButton>
     </IonButtons>
     <IonButtons slot="start">
-     <IonLabel style={{ fontFamily: `${fon}` }}>{iskcon.songs[nind].name}</IonLabel>
+     <IonLabel style={{ fontFamily: `${fon}` }}>{hindit && iskcon.songs[nind].hindi ? iskcon.songs[nind].hindi : iskcon.songs[nind].name}</IonLabel>
     </IonButtons>
+    <></>
     {!wwm ? (
-     <IonButtons slot="end">
-      <IonButton onClick={changeView}>{vtb ? <ViewAgendaSharp /> : <ViewHeadlineSharp />}</IonButton>
-     </IonButtons>
-    ) : null}
+     <>
+      {vtb ? (
+       <IonButtons slot="end">
+        <IonButton
+         onClick={() => {
+          setVtb(!vtb);
+         }}
+        >
+         <ViewHeadlineSharp />
+        </IonButton>
+       </IonButtons>
+      ) : (
+       <IonButtons slot="end">
+        <IonButton
+         onClick={() => {
+          if (hindit) setVtb(!vtb);
+          else setWwm(!wwm);
+         }}
+        >
+         <ViewAgendaSharp />
+        </IonButton>
+       </IonButtons>
+      )}
+     </>
+    ) : (
+     <>
+      {hindit ? null : (
+       <IonButtons slot="end">
+        <IonButton
+         onClick={() => {
+          setWwm(!wwm);
+          setVtb(!vtb);
+         }}
+        >
+         <MenuBookSharp />
+        </IonButton>
+       </IonButtons>
+      )}
+     </>
+    )}
 
     <IonButtons slot="end">
      <IonButton
-      onclick={() => {
-       setWwm(!wwm);
+      onClick={() => {
+       setShowAlert3(true);
       }}
      >
-      <MenuBookSharp />
+      <BookmarkAdd />
      </IonButton>
-    </IonButtons>
-    <IonButtons slot="end">
-     <IonButton aria-controls="simple-menu" aria-haspopup="true" onClick={(e) => setAnchorEl(e.currentTarget)}>
-      <MoreVert />
+     <IonButton
+      onClick={() => {
+       history.push("/iskcon/settings");
+      }}
+     >
+      <SettingsSharp />
      </IonButton>
     </IonButtons>
    </IonToolbar>
 
-   <div>
+   <motion.div
+    exit={{
+     opacity: 0,
+    }}
+    animate={{ opacity: 1 }}
+    initial={{ opacity: 0 }}
+    transition={{ type: "linear", duration: 1 }}
+   >
     <ScrollToTop />
 
     {!wwm ? (
@@ -526,9 +514,9 @@ function Csong(props) {
          let ind4 = fun.indexOf(i < iarr.length - 1 ? iarr[i + 1] + ")" : "Song Name", fun.indexOf("TRANSLATION"));
          let zen1;
          if (sent <= 9) {
-          zen1 = fun.slice(ind3 + 2, ind4);
+          zen1 = hindit && iskcon.songs[nind].hindi ? fun.slice(ind3 + 3, ind4 - 1) : fun.slice(ind3 + 2, ind4);
          } else {
-          zen1 = fun.slice(ind3 + 3, ind4);
+          zen1 = hindit && iskcon.songs[nind].hindi ? fun.slice(ind3 + 4, ind4 - 1) : fun.slice(ind3 + 3, ind4);
          }
          let ztext1 = zen1.split(/\r\n|\n/);
 
@@ -537,10 +525,10 @@ function Csong(props) {
 
           let indR = fun.indexOf("Refrain:");
 
-          let zenr = fun.slice(indr, ind1);
+          let zenr = hindit && iskcon.songs[nind].hindi ? fun.slice(indr, ind1).replace("(refrain)", "(टेक)") : fun.slice(indr, ind1);
           let ztextr = zenr.split(/\r\n|\n/);
 
-          let zenR = fun.slice(indR, ind3);
+          let zenR = hindit && iskcon.songs[nind].hindi ? fun.slice(indR, ind3 - 1).replace("Refrain", "टेक") : fun.slice(indR, ind3);
           let ztextR = zenR.split(/\r\n|\n/);
 
           return (
@@ -548,11 +536,11 @@ function Csong(props) {
             <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
              <IonCardContent>
               {ztextr.map((vad) => {
-               return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+               return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
               })}
               {indR !== -1 ? <br /> : ""}
               {ztextR.map((vad1) => {
-               return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
+               return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
               })}
              </IonCardContent>
             </IonCard>
@@ -560,11 +548,11 @@ function Csong(props) {
             <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
              <IonCardContent>
               {ztext.map((vad) => {
-               return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+               return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
               })}
               <br />
               {ztext1.map((vad1) => {
-               return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
+               return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
               })}
              </IonCardContent>
             </IonCard>
@@ -576,11 +564,11 @@ function Csong(props) {
           <IonCard color={clr} style={{ fontFamily: `${fon}`, color: `${color2}` }}>
            <IonCardContent>
             {ztext.map((vad) => {
-             return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+             return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
             })}
             <br />
             {ztext1.map((vad1) => {
-             return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
+             return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
             })}
            </IonCardContent>
           </IonCard>
@@ -600,20 +588,21 @@ function Csong(props) {
 
            if (i === 0 && fun.indexOf("(refrain)") !== -1) {
             let indr = fun.indexOf("(refrain)");
-            let zenr = fun.slice(indr, ind1);
+
+            let zenr = hindit && iskcon.songs[nind].hindi ? fun.slice(indr, ind1).replace("(refrain)", "(टेक)") : fun.slice(indr, ind1);
             let ztextr = zenr.split(/\r\n|\n/);
 
             return (
              <div>
               <p>
                {ztextr.map((vad) => {
-                return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+                return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
                })}
               </p>
 
               <p>
                {ztext.map((vad) => {
-                return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+                return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
                })}
               </p>
              </div>
@@ -623,7 +612,7 @@ function Csong(props) {
            return (
             <p>
              {ztext.map((vad) => {
-              return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+              return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
              })}
             </p>
            );
@@ -633,46 +622,50 @@ function Csong(props) {
 
         <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
          <IonCardContent>
-          <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>Translation</p>
+          <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{hindit && iskcon.songs[nind].hindi ? "अर्थ" : "Translation"}</p>
           {iarr.map((sent, i) => {
            let ind3 = fun.indexOf(sent + ")", fun.indexOf("TRANSLATION"));
            let ind4 = fun.indexOf(i < iarr.length - 1 ? iarr[i + 1] + ")" : "Song Name", fun.indexOf("TRANSLATION"));
 
-           let zen1 = fun.slice(ind3, ind4);
+           let zen1 = hindit && iskcon.songs[nind].hindi ? fun.slice(ind3, ind4 - 1) : fun.slice(ind3, ind4);
            let ztext1 = zen1.split(/\r\n|\n/);
-           if (i === 0 && fun.indexOf("(refrain)") !== -1) {
-            let indR = fun.indexOf("Refrain:");
 
-            let zenR = fun.slice(indR, ind3);
-            let ztextR = zenR.split(/\r\n|\n/);
+           if (ztext1[0].length < 5) return null;
+           else {
+            if (i === 0 && fun.indexOf("(refrain)") !== -1) {
+             let indR = fun.indexOf("Refrain:");
+
+             let zenR = hindit && iskcon.songs[nind].hindi ? fun.slice(indR, ind3 - 1).replace("Refrain", "टेक") : fun.slice(indR, ind3);
+             let ztextR = zenR.split(/\r\n|\n/);
+
+             return (
+              <div>
+               <p>
+                <br />
+                {ztextR.map((vad1) => {
+                 return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
+                })}
+               </p>
+
+               <p>
+                <br />
+                {ztext1.map((vad1) => {
+                 return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
+                })}
+               </p>
+              </div>
+             );
+            }
 
             return (
-             <div>
-              <p>
-               <br />
-               {ztextR.map((vad1) => {
-                return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
-               })}
-              </p>
-
-              <p>
-               <br />
-               {ztext1.map((vad1) => {
-                return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
-               })}
-              </p>
-             </div>
+             <p>
+              <br />
+              {ztext1.map((vad1) => {
+               return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
+              })}
+             </p>
             );
            }
-
-           return (
-            <p>
-             <br />
-             {ztext1.map((vad1) => {
-              return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
-             })}
-            </p>
-           );
           })}
          </IonCardContent>
         </IonCard>
@@ -710,14 +703,14 @@ function Csong(props) {
               return (
                <div>
                 <br />
-                <p style={{ fontSize: `${tsize}px` }}>
+                <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>
                  {oword.map((word, iword) => {
                   let english = word.slice(word.lastIndexOf("-") + 1);
                   let sanskrit = word.slice(0, word.lastIndexOf("-"));
 
                   return (
                    <>
-                    <span style={{ fontWeight: 600 }}>{sanskrit}</span> — <span>{english}</span>
+                    <span style={{ fontWeight: 600, color: `${clr ? "white" : "black"}` }}>{sanskrit}</span> — <span>{english}</span>
                     {iword !== oword.length - 1 ? "; " : null}
                    </>
                   );
@@ -733,7 +726,7 @@ function Csong(props) {
               return (
                <div>
                 <br />
-                <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad}</p>
                </div>
               );
              }
@@ -754,12 +747,12 @@ function Csong(props) {
                return (
                 <div>
                  <br />
-                 <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                 <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad}</p>
                 </div>
                );
               }
              } else {
-              return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+              return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
              }
             }
            })}
@@ -792,7 +785,7 @@ function Csong(props) {
          return (
           <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
            <IonCardContent>
-            <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>Text {sent} </p>
+            <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>Text {sent} </p>
             {ztext.map((vad, i) => {
              if (vad.indexOf(";") !== -1) {
               left = true;
@@ -816,13 +809,13 @@ function Csong(props) {
                return (
                 <div>
                  <br />
-                 <p style={{ fontSize: `${tsize}px` }}>
+                 <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>
                   {oword.map((word, iword) => {
                    let english = word.slice(word.lastIndexOf("-") + 1);
                    let sanskrit = word.slice(0, word.lastIndexOf("-"));
                    return (
                     <>
-                     <span style={{ fontWeight: 600 }}>{sanskrit}</span> — <span>{english}</span>
+                     <span style={{ fontWeight: 600, color: `${clr ? "white" : "black"}` }}>{sanskrit}</span> — <span>{english}</span>
                      {iword !== oword.length - 1 ? "; " : null}
                     </>
                    );
@@ -841,7 +834,7 @@ function Csong(props) {
                return (
                 <div>
                  <br />
-                 <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                 <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad}</p>
                 </div>
                );
               }
@@ -862,12 +855,12 @@ function Csong(props) {
                 return (
                  <div>
                   <br />
-                  <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                  <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad}</p>
                  </div>
                 );
                }
               } else {
-               return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+               return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
               }
              }
             })}
@@ -894,16 +887,16 @@ function Csong(props) {
          return (
           <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
            <IonCardContent>
-            <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>Text {sent}</p>
+            <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>Text {sent}</p>
             {ztext.map((vad, i) => {
-             return <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>;
+             return <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>{vad}</p>;
             })}
             {ind3 !== -1 ? <br /> : <p></p>}
             {ztext1.map((vad1) => {
              if (vad1.indexOf("Text " + sent) !== -1) {
               vad1 = vad1.replace("Text " + sent, "");
              }
-             return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
+             return <p style={{ fontSize: `${tsize}px`, textAlign: "justify", textJustify: "auto" }}>{vad1}</p>;
             })}
            </IonCardContent>
           </IonCard>
@@ -913,7 +906,7 @@ function Csong(props) {
       ) : (
        <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
         <IonCardContent>
-         <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>
+         <p style={{ textAlign: "center", color: `${color3}`, fontSize: `${tsize}px` }}>
           Sorry Prabhuji/Mataji, we are currently not having the word to word meanings for this Song
          </p>
         </IonCardContent>
@@ -922,15 +915,15 @@ function Csong(props) {
      </p>
     )}
 
-    <div className="lhide" style={{ height: "95px" }}></div>
-
-    <IonActionSheet
-     isOpen={showActionSheet}
-     onDidDismiss={() => setShowActionSheet(false)}
-     cssClass="my-custom-class"
-     buttons={iskcon.songs[nind].link.map((link, i) => {
+    {controls === "false" ? <div className="lhide" style={{ height: "95px" }}></div> : null}
+   </motion.div>
+   <IonActionSheet
+    isOpen={showActionSheet}
+    onDidDismiss={() => setShowActionSheet(false)}
+    buttons={[
+     ...iskcon.songs[nind].link.map((link, i) => {
       return {
-       text: link.linkname,
+       text: hindit && iskcon.songs[nind].hindi ? link.hlinkname : link.linkname,
        handler: () => {
         if (duration) {
          file.pause();
@@ -949,10 +942,17 @@ function Csong(props) {
         setDevi(i);
        },
       };
-     })}
-    ></IonActionSheet>
-   </div>
-   <div className="phide" style={{ position: "fixed", right: "18px", bottom: "10px", zIndex: 1000000000 }}>
+     }),
+     {
+      text: "Cancel",
+      role: "cancel",
+      handler: () => {
+       console.log("Cancel clicked");
+      },
+     },
+    ]}
+   ></IonActionSheet>
+   <div className={controls === "true" ? null : "phide"} style={{ position: "fixed", right: "18px", bottom: "11px", zIndex: 1000000000 }}>
     <p style={{ visibility: "hidden" }}>button</p>
 
     <IonFab activated={fabClose ? false : true} className="noselect" vertical="center" horizontal="center">
@@ -960,7 +960,7 @@ function Csong(props) {
       value={duration ? (cposition / (file.getDuration() - 1)) * 100 : (current / dur) * 100}
       aria-labelledby="continuous-slider"
       size={68}
-      style={{ position: "absolute", top: "-6px", right: "-6px" }}
+      style={{ position: "absolute", top: "-6px", right: "-6px", opacity: "50%" }}
       variant="determinate"
      />
      <IonFabButton
@@ -968,21 +968,14 @@ function Csong(props) {
        setFabClose(!fabClose);
       }}
       color={clr ? "warning" : "primary"}
+      style={{ opacity: "50%" }}
      >
-      <IonIcon icon={chevronBackCircle} />
+      <IonIcon icon={chevronBackOutline} />
      </IonFabButton>
      <IonFabList side="start">
-      {repeat === "no" ? (
-       <IonFabButton color={clr ? "medium" : "secondary"} onClick={() => setRepeat("yes")}>
-        {" "}
-        <RepeatOneSharp style={{ fontSize: 18 }} />{" "}
-       </IonFabButton>
-      ) : (
-       <IonFabButton color={clr ? "warning" : "primary"} onClick={() => setRepeat("no")}>
-        {" "}
-        <RepeatOneSharp style={{ fontSize: 18 }} />{" "}
-       </IonFabButton>
-      )}
+      <IonFabButton color={clr ? "warning" : "primary"} onClick={download}>
+       {duration ? <CloudDoneSharp style={{ fontSize: 18 }} /> : <CloudDownloadSharp style={{ fontSize: 18 }} />}
+      </IonFabButton>
 
       <IonFabButton
        color={clr ? "warning" : "primary"}
@@ -1024,88 +1017,82 @@ function Csong(props) {
     </IonFab>
    </div>
 
-   <IonToolbar color={clr} className="foot lhide">
-    <Slider
-     className={classes.slider}
-     value={duration ? cposition : current}
-     onChange={handleSliderChange}
-     aria-labelledby="continuous-slider"
-     min={0}
-     max={duration ? file.getDuration() - 1 : dur}
-    />
-    <IonLabel style={{ display: "block", fontSize: "15px", margin: 0, border: 0, padding: 0, fontFamily: `${fon}` }}>
-     {iskcon.songs[nind].link[devi].linkname}
-    </IonLabel>
-    <div style={{ display: "flex", justifyContent: "center" }}>
-     <IonLabel style={{ fontFamily: `${fon}` }} className="label">
-      {" "}
-      {duration ? formatTime(cposition.toFixed(0)) : formatTime(current.toFixed(0))}{" "}
+   {controls === "false" ? (
+    <IonToolbar color={clr} className="foot lhide">
+     <Slider
+      className={classes.slider}
+      value={duration ? cposition : current}
+      onChange={handleSliderChange}
+      aria-labelledby="continuous-slider"
+      min={0}
+      max={duration ? file.getDuration() - 1 : dur}
+     />
+     <IonLabel style={{ display: "block", fontSize: "15px", margin: 0, border: 0, padding: 0, fontFamily: `${fon}` }}>
+      {hindit && iskcon.songs[nind].hindi ? iskcon.songs[nind].link[devi].hlinkname : iskcon.songs[nind].link[devi].linkname}
      </IonLabel>
-
-     <IonButton color={clr ? "warning" : "primary"} onClick={() => setShowActionSheet(true)}>
-      <Person style={{ fontSize: 18 }} />
-     </IonButton>
-
-     <IonButton
-      color={clr ? "warning" : "primary"}
-      onClick={() => {
-       if (duration) {
-        file.getCurrentPosition().then((position) => {
-         if (position > 15) file.seekTo(position * 1000 - 15000);
-         else file.seekTo(1);
-        });
-       } else {
-        if (audi.current) audi.current.currentTime -= 15;
-       }
-      }}
-     >
-      <FastRewindSharp style={{ fontSize: 18 }} />
-     </IonButton>
-     <IonButton color={clr ? "warning" : "primary"} onClick={duration ? playoff : playon}>
-      {ppb ? <PauseCircleOutline style={{ fontSize: 18 }} /> : <PlayCircleOutline style={{ fontSize: 18 }} />}
-     </IonButton>
-
-     <IonButton
-      color={clr ? "warning" : "primary"}
-      onClick={() => {
-       if (duration) {
-        file.getCurrentPosition().then((position) => {
-         if (file.getDuration() - position > 16) file.seekTo(position * 1000 + 15000);
-         else file.seekTo(file.getDuration() - 1);
-        });
-       } else {
-        if (audi.current) audi.current.currentTime += 15;
-       }
-      }}
-     >
-      <FastForwardSharp style={{ fontSize: 18 }} />
-     </IonButton>
-
-     {repeat === "no" ? (
-      <IonButton color={clr ? "medium" : "secondary"} onClick={() => setRepeat("yes")}>
-       {" "}
-       <RepeatOneSharp style={{ fontSize: 18 }} />{" "}
-      </IonButton>
-     ) : (
-      <IonButton color={clr ? "warning" : "primary"} onClick={() => setRepeat("no")}>
-       {" "}
-       <RepeatOneSharp style={{ fontSize: 18 }} />{" "}
-      </IonButton>
-     )}
-
-     {!duration ? (
+     <div style={{ display: "flex", justifyContent: "center" }}>
       <IonLabel style={{ fontFamily: `${fon}` }} className="label">
        {" "}
-       {audi.current ? (audi.current.duration ? formatTime(audi.current.duration.toFixed(0)) : "0:00") : "0:00"}{" "}
+       {duration ? formatTime(cposition.toFixed(0)) : formatTime(current.toFixed(0))}{" "}
       </IonLabel>
-     ) : (
-      <IonLabel style={{ fontFamily: `${fon}` }} className="label">
-       {" "}
-       {duration}
-      </IonLabel>
-     )}
-    </div>
-   </IonToolbar>
+
+      <IonButton color={clr ? "warning" : "primary"} onClick={() => setShowActionSheet(true)}>
+       <Person style={{ fontSize: 18 }} />
+      </IonButton>
+
+      <IonButton
+       color={clr ? "warning" : "primary"}
+       onClick={() => {
+        if (duration) {
+         file.getCurrentPosition().then((position) => {
+          if (position > 15) file.seekTo(position * 1000 - 15000);
+          else file.seekTo(1);
+         });
+        } else {
+         if (audi.current) audi.current.currentTime -= 15;
+        }
+       }}
+      >
+       <FastRewindSharp style={{ fontSize: 18 }} />
+      </IonButton>
+      <IonButton color={clr ? "warning" : "primary"} onClick={duration ? playoff : playon}>
+       {ppb ? <PauseCircleOutline style={{ fontSize: 18 }} /> : <PlayCircleOutline style={{ fontSize: 18 }} />}
+      </IonButton>
+
+      <IonButton
+       color={clr ? "warning" : "primary"}
+       onClick={() => {
+        if (duration) {
+         file.getCurrentPosition().then((position) => {
+          if (file.getDuration() - position > 16) file.seekTo(position * 1000 + 15000);
+          else file.seekTo(file.getDuration() - 1);
+         });
+        } else {
+         if (audi.current) audi.current.currentTime += 15;
+        }
+       }}
+      >
+       <FastForwardSharp style={{ fontSize: 18 }} />
+      </IonButton>
+
+      <IonButton color={clr ? "warning" : "primary"} onClick={download}>
+       {duration ? <CloudDoneSharp style={{ fontSize: 18 }} /> : <CloudDownloadSharp style={{ fontSize: 18 }} />}
+      </IonButton>
+
+      {!duration ? (
+       <IonLabel style={{ fontFamily: `${fon}` }} className="label">
+        {" "}
+        {audi.current ? (audi.current.duration ? formatTime(audi.current.duration.toFixed(0)) : "0:00") : "0:00"}{" "}
+       </IonLabel>
+      ) : (
+       <IonLabel style={{ fontFamily: `${fon}` }} className="label">
+        {" "}
+        {duration}
+       </IonLabel>
+      )}
+     </div>
+    </IonToolbar>
+   ) : null}
 
    <audio
     onEnded={() => {
@@ -1128,60 +1115,6 @@ function Csong(props) {
    <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastText} duration={2000} />
 
    <IonAlert
-    isOpen={showAlert}
-    onDidDismiss={() => setShowAlert(false)}
-    cssClass="my-custom-class"
-    header={"Select a Playlist"}
-    inputs={inputs}
-    buttons={[
-     {
-      text: "Cancel",
-      role: "cancel",
-      cssClass: "secondary",
-      handler: () => {},
-     },
-     {
-      text: "Ok",
-      handler: (res) => {
-       if (res === "New Playlist") {
-        setShowAlert2(true);
-       } else {
-        addtoplaylist(res);
-       }
-      },
-     },
-    ]}
-   />
-
-   <IonAlert
-    isOpen={showAlert2}
-    onDidDismiss={() => setShowAlert2(false)}
-    cssClass="my-custom-class"
-    header={"New Playlist"}
-    inputs={[
-     {
-      name: "newplay",
-      type: "text",
-      placeholder: "New Playlist",
-     },
-    ]}
-    buttons={[
-     {
-      text: "Cancel",
-      role: "cancel",
-      cssClass: "secondary",
-      handler: () => {},
-     },
-     {
-      text: "Ok",
-      handler: (res) => {
-       addtoplaylist(res.newplay);
-      },
-     },
-    ]}
-   />
-
-   <IonAlert
     isOpen={showAlert3}
     onDidDismiss={() => setShowAlert3(false)}
     cssClass="my-custom-class"
@@ -1191,7 +1124,7 @@ function Csong(props) {
      {
       text: "Cancel",
       role: "cancel",
-      cssClass: "secondary",
+      cssClass: "warning",
       handler: () => {},
      },
      {
@@ -1223,7 +1156,7 @@ function Csong(props) {
      {
       text: "Cancel",
       role: "cancel",
-      cssClass: "secondary",
+      cssClass: "warning",
       handler: () => {},
      },
      {
@@ -1234,31 +1167,6 @@ function Csong(props) {
      },
     ]}
    />
-
-   <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-    <IonItem button onClick={download}>
-     <IonLabel style={{ fontFamily: `${fon}` }}>Download current song</IonLabel>
-    </IonItem>
-    <IonItem
-     button
-     onClick={() => {
-      setAnchorEl(null);
-      setShowAlert(true);
-     }}
-    >
-     <IonLabel style={{ fontFamily: `${fon}` }}> Add to Playlist</IonLabel>
-    </IonItem>
-    <IonItem
-     lines="none"
-     button
-     onClick={() => {
-      setAnchorEl(null);
-      setShowAlert3(true);
-     }}
-    >
-     <IonLabel style={{ fontFamily: `${fon}` }}> Bookmark this Song</IonLabel>
-    </IonItem>
-   </Menu>
   </div>
  );
 }

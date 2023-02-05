@@ -1,18 +1,17 @@
 import React, { useContext, useState } from "react";
-import { BookMark, Colour, FontType } from "../global";
+import { BookMark, Colour, FontType, Hindit } from "../global";
 import { IonItem, IonButton, IonLabel, IonToolbar, IonButtons, IonCheckbox, IonSegment, IonSegmentButton } from "@ionic/react";
-import { IndeterminateCheckBoxOutlined } from "@material-ui/icons";
-import { LibraryMusicSharp, CollectionsBookmarkSharp, QueueMusicSharp, MenuBookSharp } from "@material-ui/icons";
+import { IndeterminateCheckBoxOutlined } from "@mui/icons-material";
+import { QueueMusicSharp, MenuBookSharp } from "@mui/icons-material";
 import { Switch, Route, useLocation, useRouteMatch, useHistory } from "react-router-dom";
 import Bsub from "./bsub";
-import { useLocal } from "../lshooks";
-import { Switch as Switchbtn } from "@material-ui/core";
+import { AutoStoriesSharp, PlayLessonSharp, BookmarkAdd, PlaylistPlaySharp } from "@mui/icons-material";
+import SP from "../../sp.png";
 
 function Bookmarks() {
  let { path, url } = useRouteMatch();
  const [bookMark, dispatch2] = useContext(BookMark);
  const [select, setSelect] = useState(false);
- const [bplaySwitch, setBplaySwitch] = useLocal("bplaySwitch", true);
 
  let history = useHistory();
  let location = useLocation();
@@ -22,6 +21,7 @@ function Bookmarks() {
  if (clr) color = "white";
 
  const [font, setFont] = useContext(FontType);
+ const [hindit, setHindi] = useContext(Hindit);
 
  let fon;
  if (!font) fon = "Calibri";
@@ -34,7 +34,7 @@ function Bookmarks() {
      <div>
       <IonToolbar className="ionhead" color={clr ? "warning" : "primary"}>
        <IonButtons slot="start">
-        <IonLabel style={{ marginLeft: "10px", fontFamily: `${fon}` }}>Bookmarks</IonLabel>
+        <IonLabel style={{ marginLeft: "10px", fontFamily: `${fon}` }}>{hindit ? "बुकमार्क" : "Bookmarks"}</IonLabel>
        </IonButtons>
 
        {select ? (
@@ -84,12 +84,18 @@ function Bookmarks() {
        )}
       </IonToolbar>
       <div style={{ height: "58px" }}></div>
-      <IonItem color={clr}>
-       <IonLabel>Autoplay Bookmark Songs </IonLabel>
-       <Switchbtn color="primary" checked={bplaySwitch} onChange={() => setBplaySwitch(!bplaySwitch)} />
-      </IonItem>
 
-      {bookMark.length === 0 ? <p style={{ textAlign: "center", color: `${color}`, fontFamily: `${fon}` }}>Please Bookmark a Song to read it here</p> : null}
+      {bookMark.length === 0 ? (
+       <>
+        <p style={{ textAlign: "center", color: `${color}`, fontFamily: `${fon}`, margin: "10px" }}>
+         You can bookmark a song by clicking <BookmarkAdd /> Icon on the heading toolbar of that song
+        </p>
+        <br />
+        <p style={{ textAlign: "center", color: `${color}`, fontFamily: `${fon}`, margin: "10px" }}>
+         You can loop through the audios of songs in a bookmark folder by clicking <PlaylistPlaySharp /> Icon on the right side of a bookmarked song
+        </p>
+       </>
+      ) : null}
       {bookMark.map((ele, i) => {
        return (
         <IonItem
@@ -98,7 +104,7 @@ function Bookmarks() {
           if (!select) history.push(`${url}/${i}`);
          }}
         >
-         <IonLabel style={{ fontFamily: `${fon}` }}>{ele.name} </IonLabel>
+         <IonLabel style={{ fontFamily: `${fon}` }}>{ele.name ?? "Default"} </IonLabel>
 
          {select ? (
           <IonCheckbox
@@ -116,25 +122,35 @@ function Bookmarks() {
      </div>
     </Route>
     <Route path={`${path}/:ind`}>
-     <Bsub value={bplaySwitch} />
+     <Bsub />
     </Route>
    </Switch>
+
    <IonToolbar className="tab" color={clr ? "warning" : "primary"}>
     <IonSegment value="default">
-     <IonSegmentButton onClick={() => history.push("/iskcon")}>
+     <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/iskcon")}>
       <QueueMusicSharp />
      </IonSegmentButton>
-     <IonSegmentButton onClick={() => history.push("/topics")}>
-      <MenuBookSharp />
-     </IonSegmentButton>
-     <IonSegmentButton onClick={() => history.push("/playlist")}>
-      <LibraryMusicSharp />
-     </IonSegmentButton>
-     <IonSegmentButton value="default" onClick={() => history.push("/bookmarks")}>
-      <CollectionsBookmarkSharp />
+     {!hindit ? (
+      <>
+       <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/topics")}>
+        <MenuBookSharp />
+       </IonSegmentButton>
+       <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/sp")}>
+        <img src={SP} style={{ height: "40px" }} />
+       </IonSegmentButton>
+       <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/sb")}>
+        <AutoStoriesSharp />
+       </IonSegmentButton>
+      </>
+     ) : null}
+
+     <IonSegmentButton value="default" style={{ minWidth: 0 }} onClick={() => history.push("/bookmarks")}>
+      <PlayLessonSharp />
      </IonSegmentButton>
     </IonSegment>
    </IonToolbar>
+   <div style={{ height: "56px" }}></div>
   </div>
  );
 }

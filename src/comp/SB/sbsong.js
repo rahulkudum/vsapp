@@ -1,10 +1,12 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Colour, Tsize, View, BookMark, FontType,Aos } from "../global";
+import { Colour, Tsize, View, BookMark, FontType, Aos } from "../global";
 import { IonToolbar, IonLabel, IonButtons, IonButton, IonCard, IonCardContent, IonAlert, IonToast } from "@ionic/react";
 import { useParams, useRouteMatch, useHistory } from "react-router-dom";
-import { ViewAgendaSharp, MenuBookSharp, ArrowBackSharp, CollectionsBookmark } from "@material-ui/icons";
+import { ViewAgendaSharp, MenuBookSharp, ArrowBackSharp } from "@mui/icons-material";
 import ScrollToTop from "../scroll";
 import { Insomnia } from "@awesome-cordova-plugins/insomnia";
+import { motion } from "framer-motion";
+import { BookmarkAdd, ViewHeadlineSharp } from "@mui/icons-material";
 
 function SBP(props) {
  let { ind } = useParams();
@@ -19,7 +21,7 @@ function SBP(props) {
  const [toastText, setToastText] = useState();
  const [clr, setClr] = useContext(Colour);
  let color;
- if (clr) color = "#FFEB3B";
+ if (clr) color = "#181818";
  else color = "#00CBFE";
  let color2;
  if (clr) color2 = "";
@@ -36,23 +38,13 @@ function SBP(props) {
  const [wwm, setWwm] = useState(wwmb);
  const [aos, setAos] = useContext(Aos);
  useEffect(() => {
-  if (aos) {
-   Insomnia.keepAwake().then(
-    () => console.log("switched on"),
-    () => console.log("error on")
-   );
+  if (aos === "true") {
+   Insomnia.keepAwake()
    return () => {
-    Insomnia.allowSleepAgain().then(
-     () => console.log("Switched off"),
-     () => console.log("error off")
-    );
+    Insomnia.allowSleepAgain()
    };
   }
  }, []);
-
- function changeView() {
-  setVtb(!vtb);
- }
 
  const [font, setFont] = useContext(FontType);
 
@@ -64,9 +56,7 @@ function SBP(props) {
  let index2 = 1;
  let present2 = 0;
  let iarr2 = [];
- let i1;
  let left;
- let lef;
 
  let id2 = id + 1 >= content.chap[i2].song.length ? content.chap[i2].eindex : content.chap[i2].song[id + 1].index;
 
@@ -77,7 +67,7 @@ function SBP(props) {
    break;
   }
 
-  console.log(present2);
+//   console.log(present2);
   //console.log(fun2.indexOf("Text",present2 ));
 
   present2 = fun2.indexOf("Text", fun2.indexOf("Text", present2) + 5);
@@ -93,7 +83,7 @@ function SBP(props) {
   inputs2.push({
    name: ele.name,
    type: "radio",
-   label: ele.name,
+   label: ele.name ?? "Default",
    value: ele.name,
   });
  });
@@ -143,29 +133,56 @@ function SBP(props) {
      </IonLabel>
     </IonButtons>
     {!wwm ? (
+     <>
+      {vtb ? (
+       <IonButtons slot="end">
+        <IonButton
+         onClick={() => {
+          setVtb(!vtb);
+         }}
+        >
+         <ViewHeadlineSharp />
+        </IonButton>
+       </IonButtons>
+      ) : (
+       <IonButtons slot="end">
+        <IonButton
+         onClick={() => {
+          setWwm(!wwm);
+         }}
+        >
+         <MenuBookSharp />
+        </IonButton>
+       </IonButtons>
+      )}
+     </>
+    ) : (
      <IonButtons slot="end">
-      <IonButton onClick={changeView}>
-       <MenuBookSharp />
+      <IonButton
+       onClick={() => {
+        setWwm(!wwm);
+        setVtb(!vtb);
+       }}
+      >
+       <ViewAgendaSharp />
       </IonButton>
      </IonButtons>
-    ) : null}
+    )}
 
     <IonButtons slot="end">
-     <IonButton
-      onclick={() => {
-       setWwm(!wwm);
-      }}
-     >
-      <ViewAgendaSharp />
-     </IonButton>
-    </IonButtons>
-    <IonButtons slot="end">
      <IonButton onClick={() => setShowAlert3(true)}>
-      <CollectionsBookmark />
+      <BookmarkAdd />
      </IonButton>
     </IonButtons>
    </IonToolbar>
-   <div>
+   <motion.div
+    exit={{
+     opacity: 0,
+    }}
+    animate={{ opacity: 1 }}
+    initial={{ opacity: 0 }}
+    transition={{ type: "linear", duration: 1 }}
+   >
     <div style={{ height: "32px" }}></div>
     <p style={{ backgroundColor: `${color}`, padding: "6px 0 4px 0", fontFamily: `${fon}`, marginTop: "20px", marginBottom: 0 }}>
      {iarr2.map((sent, i) => {
@@ -201,7 +218,7 @@ function SBP(props) {
            return (
             <div>
              <br />
-             <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+             <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
             </div>
            );
           }
@@ -260,7 +277,7 @@ function SBP(props) {
      ]}
     />
     <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastText} duration={2000} />
-   </div>
+   </motion.div>
   </div>
  );
 }

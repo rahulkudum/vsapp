@@ -1,10 +1,12 @@
 import React, { useContext, useState, useEffect } from "react";
-import { BookContent, BookMark, Colour, FontType, Tsize, View,Aos } from "../global";
+import { BookContent, BookMark, Colour, FontType, Tsize, View, Aos } from "../global";
 import ScrollToTop from "../scroll";
 import { IonCard, IonCardContent, IonAlert, IonToast, IonButton, IonButtons, IonToolbar, IonLabel } from "@ionic/react";
-import { useParams, useRouteMatch, useHistory } from "react-router-dom";
-import { CollectionsBookmark, ArrowBackSharp, MenuBookSharp } from "@material-ui/icons";
+import { useParams, useRouteMatch, useHistory, useLocation } from "react-router-dom";
+import { ArrowBackSharp, MenuBookSharp } from "@mui/icons-material";
 import { Insomnia } from "@awesome-cordova-plugins/insomnia";
+import { motion } from "framer-motion";
+import { BookmarkAdd, ViewAgendaSharp, ViewHeadlineSharp } from "@mui/icons-material";
 
 function Song(props) {
  let index2 = 1;
@@ -20,21 +22,16 @@ function Song(props) {
  const [showToast, setShowToast] = useState(false);
  const [toastText, setToastText] = useState();
  let history = useHistory();
+ let location = useLocation();
  let { songid } = useParams();
  let id = Number(songid);
 
  const [aos, setAos] = useContext(Aos);
  useEffect(() => {
-  if (aos) {
-   Insomnia.keepAwake().then(
-    () => console.log("switched on"),
-    () => console.log("error on")
-   );
+  if (aos === "true") {
+   Insomnia.keepAwake()
    return () => {
-    Insomnia.allowSleepAgain().then(
-     () => console.log("Switched off"),
-     () => console.log("error off")
-    );
+    Insomnia.allowSleepAgain()
    };
   }
  }, []);
@@ -44,7 +41,7 @@ function Song(props) {
   inputs2.push({
    name: ele.name,
    type: "radio",
-   label: ele.name,
+   label: ele.name ?? "Default",
    value: ele.name,
   });
  });
@@ -109,7 +106,7 @@ function Song(props) {
 
  const [clr, setClr] = useContext(Colour);
  let color;
- if (clr) color = "#FFEB3B";
+ if (clr) color = "#181818";
  else color = "#00CBFE";
  let color2;
  if (clr) color2 = "";
@@ -145,16 +142,23 @@ function Song(props) {
        setWwm(!wwm);
       }}
      >
-      <MenuBookSharp />
+      {wwm ? <ViewHeadlineSharp /> : <MenuBookSharp />}
      </IonButton>
     </IonButtons>
     <IonButtons slot="end" onClick={() => setShowAlert3(true)}>
      <IonButton>
-      <CollectionsBookmark />
+      <BookmarkAdd />
      </IonButton>
     </IonButtons>
    </IonToolbar>
-   <div>
+   <motion.div
+    exit={{
+     opacity: 0,
+    }}
+    animate={{ opacity: 1 }}
+    initial={{ opacity: 0 }}
+    transition={{ type: "linear", duration: 1 }}
+   >
     <div style={{ height: "32px" }}></div>
 
     {!wwm && fun2.indexOf(";") === -1 ? (
@@ -189,27 +193,10 @@ function Song(props) {
            if (vad.indexOf(".") === -1 && vad[dk] !== "!" && vad[dk] !== "?") {
             ztextr[i + 1] = ztextr[i].concat(ztextr[i + 1]);
            } else {
-            vad = vad.replace(/—/g, "-");
-            vad = vad.replace(/--/g, "-");
-            vad = vad.replace(/–/g, "-");
-            let oword = vad.split(";");
-
             return (
              <div>
               <br />
-              <p style={{ fontSize: `${tsize}px` }}>
-               {oword.map((word, iword) => {
-                let english = word.slice(word.lastIndexOf("-") + 1);
-                let sanskrit = word.slice(0, word.lastIndexOf("-"));
-
-                return (
-                 <>
-                  <span style={{ fontWeight: 600 }}>{sanskrit}</span> — <span>{english}</span>
-                  {iword !== oword.length - 1 ? "; " : null}
-                 </>
-                );
-               })}
-              </p>
+              <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
              </div>
             );
            }
@@ -220,7 +207,7 @@ function Song(props) {
             return (
              <div>
               <br />
-              <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+              <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
              </div>
             );
            }
@@ -241,7 +228,7 @@ function Song(props) {
              return (
               <div>
                <br />
-               <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+               <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
               </div>
              );
             }
@@ -294,28 +281,10 @@ function Song(props) {
              if (vad.indexOf(".") === -1 && vad[dk] !== "!" && vad[dk] !== "?") {
               ztext[i + 1] = ztext[i].concat(ztext[i + 1]);
              } else {
-              vad = vad.replace(/—/g, "-");
-              vad = vad.replace(/--/g, "-");
-              vad = vad.replace(/–/g, "-");
-
-              let oword = vad.split(";");
-
               return (
                <div>
                 <br />
-                <p style={{ fontSize: `${tsize}px` }}>
-                 {oword.map((word, iword) => {
-                  let english = word.slice(word.lastIndexOf("-") + 1);
-                  let sanskrit = word.slice(0, word.lastIndexOf("-"));
-
-                  return (
-                   <>
-                    <span style={{ fontWeight: 600 }}>{sanskrit}</span> — <span>{english}</span>
-                    {iword !== oword.length - 1 ? "; " : null}
-                   </>
-                  );
-                 })}
-                </p>
+                <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
                </div>
               );
              }
@@ -329,7 +298,7 @@ function Song(props) {
               return (
                <div>
                 <br />
-                <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
                </div>
               );
              }
@@ -343,6 +312,20 @@ function Song(props) {
               }
              }
 
+             if (url.indexOf("/topics/Miscellaneous Songs/0") !== -1 || url.indexOf("/topics/Miscellaneous Songs/1") !== -1) {
+              return (
+               <div>
+                <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
+               </div>
+              );
+             }
+             if (url.indexOf("/topics/Miscellaneous Songs/3") !== -1) {
+              return (
+               <div>
+                <p style={{ textAlign: "center", fontSize: `${tsize}px` }}>{vad}</p>
+               </div>
+              );
+             }
              if (fun2.indexOf(";") === -1 && (vad[start] === "“" || vad[start] === "." || (vad[start] >= "A" && vad[start] <= "Z"))) {
               if (vad.indexOf("Text " + sent) !== -1) {
                vad = vad.replace("Text " + sent, "");
@@ -353,7 +336,7 @@ function Song(props) {
                return (
                 <div>
                  <br />
-                 <p style={{ fontSize: `${tsize}px` }}>{vad}</p>
+                 <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad}</p>
                 </div>
                );
               }
@@ -394,7 +377,7 @@ function Song(props) {
             if (vad1.indexOf("Text " + sent) !== -1) {
              vad1 = vad1.replace("Text " + sent, "");
             }
-            return <p style={{ fontSize: `${tsize}px` }}>{vad1}</p>;
+            return <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{vad1}</p>;
            })}
           </IonCardContent>
          </IonCard>
@@ -452,7 +435,7 @@ function Song(props) {
      ]}
     />
     <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastText} duration={2000} />
-   </div>
+   </motion.div>
   </div>
  );
 }

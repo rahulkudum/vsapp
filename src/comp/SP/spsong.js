@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Colour, FontType, Playlist, Tsize, BookMark, Aos } from "../global";
+import { Colour, FontType, Tsize, BookMark, Aos } from "../global";
 import { useHistory, useParams, useRouteMatch } from "react-router-dom";
 import ScrollToTop from "../scroll";
-import { IonCard, IonCardContent, IonToolbar, IonButton, IonButtons, IonLabel, IonAlert, IonToast, IonItem } from "@ionic/react";
+import { IonCard, IonCardContent, IonToolbar, IonButton, IonButtons, IonLabel, IonAlert, IonToast } from "@ionic/react";
 
-import { ArrowBackSharp, MoreVert } from "@material-ui/icons";
-import { Menu } from "@material-ui/core";
+import { ArrowBackSharp } from "@mui/icons-material";
 import { Downloader } from "@ionic-native/downloader";
 import { Insomnia } from "@awesome-cordova-plugins/insomnia";
+import { motion } from "framer-motion";
+import { BookmarkAdd, Download } from "@mui/icons-material";
 
 export default function Tsong(props) {
  let [tiskcon, settiskcon] = props.value;
@@ -22,34 +23,24 @@ export default function Tsong(props) {
  const [tsize, setTsize] = useContext(Tsize);
  const [showAlert4, setShowAlert4] = useState(false);
  let { path, url } = useRouteMatch();
- const [showAlert, setShowAlert] = useState(false);
- const [showAlert2, setShowAlert2] = useState(false);
  const [showToast, setShowToast] = useState(false);
  const [toastText, setToastText] = useState();
- const [anchorEl, setAnchorEl] = useState(null);
- const [playList, dispatch] = useContext(Playlist);
  let dlink = tiskcon.songs[nind].link;
 
  let downloadLink =
   "https://drive.google.com/u/0/uc?id=" + dlink.slice(dlink.lastIndexOf("/", dlink.lastIndexOf("/") - 1) + 1, dlink.lastIndexOf("/")) + "&export=download";
  const [aos, setAos] = useContext(Aos);
  useEffect(() => {
-  if (aos) {
-   Insomnia.keepAwake().then(
-    () => console.log("switched on"),
-    () => console.log("error on")
-   );
+  if (aos === "true") {
+   Insomnia.keepAwake()
    return () => {
-    Insomnia.allowSleepAgain().then(
-     () => console.log("Switched off"),
-     () => console.log("error off")
-    );
+    Insomnia.allowSleepAgain()
    };
   }
  }, []);
  let [clr, setClr] = useContext(Colour);
  let color;
- if (clr) color = "#FFEB3B";
+ if (clr) color = "#181818";
  else color = "#00CBFE";
  let color2;
  if (clr) color2 = "";
@@ -61,33 +52,16 @@ export default function Tsong(props) {
 
  useEffect(() => {
   if (!navigator.onLine) {
-   // true|false
-
    setToastText("You are currently offline, to get audio please turn on your internet connection and come back again");
    setShowToast(true);
   }
  }, []);
 
- let inputs = [];
- playList.map((ele) => {
-  inputs.push({
-   name: ele.name,
-   type: "radio",
-   label: ele.name,
-   value: ele.name,
-  });
- });
- inputs.push({
-  name: "New Playlist",
-  type: "radio",
-  label: "New Playlist",
-  value: "New Playlist",
- });
  bookMark.map((ele) => {
   inputs2.push({
    name: ele.name,
    type: "radio",
-   label: ele.name,
+   label: ele.name ?? "Default",
    value: ele.name,
   });
  });
@@ -135,8 +109,6 @@ export default function Tsong(props) {
  };
 
  function download() {
-  setAnchorEl(null);
-
   if (tiskcon.songs[nind].offline) {
    setToastText("Song is already Downloaded");
    setShowToast(true);
@@ -147,7 +119,7 @@ export default function Tsong(props) {
    Downloader.download(request)
     .then((location) => {
      setShowToast(false);
-     setToastText("File downloaded, please check in Vaishnava Songs folder");
+     setToastText("File downloaded, please check in Music Folder/Vaishnava Songs folder");
      setShowToast(true);
      let diskcon = { ...tiskcon };
      diskcon.songs[nind].offline = true;
@@ -161,55 +133,6 @@ export default function Tsong(props) {
   }
  }
 
- function addtoplaylist(folder) {
-  let name = tiskcon.songs[nind].name;
-
-  if (tiskcon.songs[nind].offline) {
-   let check = false;
-   playList.map((dele) => {
-    if (dele.name === folder) {
-     dele.songs.map((ele) => {
-      if (ele.name === name) {
-       check = true;
-       setToastText("Song is already added to the playlist");
-       setShowToast(true);
-      }
-     });
-    }
-   });
-   if (!check) {
-    dispatch({
-     type: "add",
-     folder: folder,
-     name: name,
-     path: "file:///storage/emulated/0/Music/Vaishnava Songs/" + name + ".mp3",
-    });
-    setToastText("Added to the playlist");
-    setShowToast(true);
-   }
-  } else {
-   setToastText("Downloading started and after downloading it will added to the playlist");
-   setShowToast(true);
-
-   Downloader.download(request)
-    .then((location) => {
-     setShowToast(false);
-     setToastText("Added to the playlist");
-     setShowToast(true);
-     dispatch({
-      type: "add",
-      folder: folder,
-      name: name,
-      path: "file:///storage/emulated/0/Music/Vaishnava Songs/" + name + ".mp3",
-     });
-    })
-    .catch((err) => {
-     setShowToast(false);
-     setToastText("Error occured while downloading, try again later");
-     setShowToast(true);
-    });
-  }
- }
  return (
   <div>
    <ScrollToTop />
@@ -221,15 +144,31 @@ export default function Tsong(props) {
     </IonButtons>
     <IonLabel style={{ fontFamily: `${fon}` }}>{tiskcon.songs[nind].name}</IonLabel>
     <IonButtons slot="end">
-     <IonButton aria-controls="simple-menu" aria-haspopup="true" onClick={(e) => setAnchorEl(e.currentTarget)}>
-      <MoreVert />
+     <IonButton
+      onClick={() => {
+       setShowAlert3(true);
+      }}
+     >
+      <BookmarkAdd />
+     </IonButton>
+     <IonButton onClick={download}>
+      <Download />
      </IonButton>
     </IonButtons>
    </IonToolbar>
 
-   <div>
+   <motion.div
+    exit={{
+     opacity: 0,
+    }}
+    animate={{ opacity: 1 }}
+    initial={{ opacity: 0 }}
+    transition={{ type: "linear", duration: 1 }}
+   >
     <div style={{ height: "56px" }}></div>
-    {navigator.onLine ? <iframe src={tiskcon.songs[nind].link} style={{ width: "100%", height: "55px" }}></iframe> : null}
+    <div style={{ width: "98%", textAlign: "center" }}>
+     {navigator.onLine ? <iframe src={tiskcon.songs[nind].link} style={{ width: "100%", height: "55px" }}></iframe> : null}
+    </div>
 
     <p style={{ marginTop: 0, borderTop: 0, marginBottom: 0, borderBottom: 0, backgroundColor: `${color}`, padding: "4px 0 2px 0" }}>
      <IonCard color={clr} style={{ color: `${color2}`, fontFamily: `${fon}` }}>
@@ -274,7 +213,7 @@ export default function Tsong(props) {
           return (
            <div>
             <br />
-            <p style={{ fontSize: `${tsize}px` }}>Purport by His Divine Grace A.C. Bhaktivedanta Swami Prabhupāda</p>
+            <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>Purport by His Divine Grace A.C. Bhaktivedanta Swami Prabhupāda</p>
             <br />
            </div>
           );
@@ -298,7 +237,7 @@ export default function Tsong(props) {
           return (
            <div>
             <br />
-            <p style={{ fontSize: `${tsize}px` }}>{td}</p>
+            <p style={{ fontSize: `${tsize}px`, textAlign: "justify" }}>{td}</p>
             <br />
            </div>
           );
@@ -308,78 +247,6 @@ export default function Tsong(props) {
       </IonCardContent>
      </IonCard>
     </p>
-
-    <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-     <IonItem button onClick={download}>
-      <IonLabel style={{ fontFamily: `${fon}` }}>Download current song</IonLabel>
-     </IonItem>
-     <IonItem
-      button
-      onClick={() => {
-       setAnchorEl(null);
-       setShowAlert(true);
-      }}
-     >
-      <IonLabel style={{ fontFamily: `${fon}` }}> Add to Playlist</IonLabel>
-     </IonItem>
-     <IonItem
-      lines="none"
-      button
-      onClick={() => {
-       setAnchorEl(null);
-       setShowAlert3(true);
-      }}
-     >
-      <IonLabel style={{ fontFamily: `${fon}` }}> Bookmark this Song</IonLabel>
-     </IonItem>
-    </Menu>
-    <IonAlert
-     isOpen={showAlert}
-     onDidDismiss={() => setShowAlert(false)}
-     cssClass="my-custom-class"
-     header={"Select a Playlist"}
-     inputs={inputs}
-     buttons={[
-      {
-       text: "Cancel",
-       role: "cancel",
-       cssClass: "secondary",
-       handler: () => {},
-      },
-      {
-       text: "Ok",
-       handler: (res) => {
-        if (res === "New Playlist") {
-         setShowAlert2(true);
-        } else {
-         addtoplaylist(res);
-        }
-       },
-      },
-     ]}
-    />
-
-    <IonAlert
-     isOpen={showAlert2}
-     onDidDismiss={() => setShowAlert2(false)}
-     cssClass="my-custom-class"
-     header={"New Playlist"}
-     inputs={[{ name: "newplay", type: "text", placeholder: "New Playlist" }]}
-     buttons={[
-      {
-       text: "Cancel",
-       role: "cancel",
-       cssClass: "secondary",
-       handler: () => {},
-      },
-      {
-       text: "Ok",
-       handler: (res) => {
-        addtoplaylist(res.newplay);
-       },
-      },
-     ]}
-    />
 
     <IonAlert
      isOpen={showAlert3}
@@ -429,7 +296,7 @@ export default function Tsong(props) {
      ]}
     />
     <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastText} duration={2000} />
-   </div>
+   </motion.div>
   </div>
  );
 }

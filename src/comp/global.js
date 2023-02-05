@@ -10,12 +10,10 @@ export const IskconContent = createContext();
 export const SearchBook = createContext();
 export const Scroll = createContext();
 export const Index = createContext();
-export const Playlist = createContext();
 export const Mediap = createContext();
 export const Medias = createContext();
 export const Mediasn = createContext();
 export const Mediat = createContext();
-export const Dplay = createContext();
 export const BookMark = createContext();
 export const Dbookmark = createContext();
 export const Prog = createContext();
@@ -24,52 +22,11 @@ export const View = createContext();
 export const Colour = createContext();
 export const FontType = createContext();
 export const Aos = createContext();
+export const Controls = createContext();
 export const Bplay = createContext();
+export const Repeat = createContext();
 
-function reducer(state, action) {
- switch (action.type) {
-  case "add":
-   let dustate = [...state];
-   let exsist = false;
-   dustate.map((ele) => {
-    if (ele.name === action.folder) {
-     ele.songs.push({ name: action.name, path: action.path, isChecked: false });
-     exsist = true;
-    }
-   });
-   if (!exsist) {
-    dustate.push({ name: action.folder, songs: [{ name: action.name, path: action.path, isChecked: false }], isChecked: false });
-   }
-   return dustate;
-
-  case "delfold":
-   return state.filter((ele) => !ele.isChecked);
-  case "delsong":
-   let dumstate = [...state];
-   dumstate[action.index].songs = dumstate[action.index].songs.filter((ele) => !ele.isChecked);
-   return dumstate;
-  case "reorder":
-   let dstate = [...state];
-
-   action.array.map((ele) => {
-    if (ele.from > ele.to) {
-     dstate[ele.index].songs.splice(ele.to, 0, dstate[ele.index].songs[ele.from]);
-
-     dstate[ele.index].songs.splice(ele.from + 1, 1);
-     // console.log(dstate);
-    }
-    if (ele.to > ele.from) {
-     dstate[ele.index].songs.splice(ele.to + 1, 0, dstate[ele.index].songs[ele.from]);
-     dstate[ele.index].songs.splice(ele.from, 1);
-    }
-   });
-
-   return dstate;
-
-  default:
-   throw new Error();
- }
-}
+export const Hindit = createContext();
 
 function reducer2(state, action) {
  switch (action.type) {
@@ -117,7 +74,6 @@ function reducer2(state, action) {
 }
 
 export function GlobalProvider({ children }) {
- const [dplaylist, setDplaylist] = useState([]);
  const [dbookmark, setDbookmark] = useState([]);
 
  const books = [
@@ -137,6 +93,8 @@ export function GlobalProvider({ children }) {
   "Sri Krsna Vijaya",
   "Krsna Lila Stava",
   "Gopala Campu",
+  "Vrindavane Bhajan",
+  "Miscellaneous Songs",
  ];
 
  let SBbook = "dummy"; // ("SBnew")
@@ -145,9 +103,9 @@ export function GlobalProvider({ children }) {
   SBbook = "SBnew";
   Psongs = "SPMP";
  }
- const [content, setContent] = useLocal("book2", []);
+ const [content, setContent] = useLocal("book5", []);
  const [content2, setContent2] = useState({ chap: [], inside: "" });
- const [iskcon, setIskcon] = useLocal("iskcon2", { scontent: "", songs: [] });
+ const [iskcon, setIskcon] = useLocal("iskcon5", { scontent: "", songs: [], author: [] });
  const [searchBook, setSearchBook] = useLocal("vswd", "");
  const [piskcon, setpiskcon] = useState({ scontent: "", songs: [] });
  const arr = useRef([]);
@@ -157,7 +115,7 @@ export function GlobalProvider({ children }) {
  const [main3, setMain3] = useLocal("sb2", "notdone");
  const [main4, setMain4] = useLocal("ps1", 0);
  const [main5, setMain5] = useLocal("ps2", "notdone");
- const [playList, dispatch] = useLocalr("playlist", reducer, []);
+
  const [bookMark, dispatch2] = useLocalr("bookmarks", reducer2, []);
  const [song, setSong] = useLocal("song", { name: "", path: "", fold: "" });
  const [tsize, setTize] = useLocal("tsize", 16);
@@ -166,17 +124,33 @@ export function GlobalProvider({ children }) {
  const [file, setFile] = useState(Media.create(song.path));
  const [cposition, setCposition] = useLocal("currentp", 0);
  const [ppb, setPpb] = useState(false);
- const [prog, setProg] = useLocal("prog2", []);
+ const [prog, setProg] = useLocal("prog5", []);
  const [view, setView] = useLocal("view", "1");
- const [aos, setAos] = useLocal("aos", true);
- const [bplay, setBplay] = useState({fold:0,song:0});
+ const [aos, setAos] = useLocal("aos", "true");
+ const [controls, setControls] = useLocal("controls", "false");
+ const [bplay, setBplay] = useLocal("bplayt", { fold: 0, song: 0 });
+ const [repeat, setRepeat] = useLocal("rb2", "yes");
+ const [hindit, setHindi] = useLocal("hindi", "");
 
- if ("prog" in localStorage) {
-  localStorage.removeItem("iskcon");
-  localStorage.removeItem("tiskcon");
-  localStorage.removeItem("piskcon");
-  localStorage.removeItem("book");
-  localStorage.removeItem("prog");
+ for (let item in localStorage) {
+  if (item.indexOf("prog") !== -1 && item !== "prog5") localStorage.removeItem(item);
+ }
+
+ async function clearStorage() {
+  await Storage.remove({ key: "govardhan" });
+ }
+
+ if (prog.length === 0) {
+  clearStorage();
+  for (let item in localStorage) {
+   if (
+    (item.indexOf("iskcon") !== -1 && item !== "iskcon5") ||
+    (item.indexOf("book") !== -1 && item !== "book5" && item !== "bookmarks") ||
+    item.indexOf("piskcon") !== -1 ||
+    item.indexOf("tiskcon") !== -1
+   )
+    localStorage.removeItem(item);
+  }
  }
 
  async function setIte(key, val) {
@@ -200,9 +174,9 @@ export function GlobalProvider({ children }) {
    }
    _xLen = (localStorage[_x].length + _x.length) * 2;
    _lsTotal += _xLen;
-   console.log(_x.substr(0, 50) + " = " + (_xLen / 1024).toFixed(2) + " KB");
+   //  console.log(_x.substr(0, 50) + " = " + (_xLen / 1024).toFixed(2) + " KB");
   }
-  console.log("Total = " + (_lsTotal / 1024).toFixed(2) + " KB");
+  // console.log("Total = " + (_lsTotal / 1024).toFixed(2) + " KB");
  }, []);
 
  useEffect(() => {
@@ -257,6 +231,64 @@ export function GlobalProvider({ children }) {
 
    let etext = [];
    let text = iskcon.scontent.slice(eindex);
+   let hcount = 0;
+   let hsingers = [
+    ["Srila Prabhupada", "श्रील प्रभुपाद"],
+    ["HH Bhakti Caru Swami", "भक्ति चारु स्वामी महाराज"],
+    ["HH Gour Govinda Swami", "गौर गोविंद स्वामी महाराज"],
+    ["HH Vedavyasa Priya Swami", "वेदव्यास प्रिय स्वामी महाराज"],
+    ["HH Radhanath Swami", "राधानाथ स्वामी महाराज"],
+    ["HH Suhotra Swami", "सुहोत्रा स्वामी महाराज"],
+    ["HH Lokanatha Swami", "लोकनाथ स्वामी महाराज"],
+    ["HH Bhakti Swarupa Damodara Swami", "भक्ति स्वरूप दामोदर स्वामी महाराज"],
+    ["HH Indradyumna Swami", "इंद्रद्युम्न स्वामी महाराज"],
+    ["HH Niranjana Swami", "निरंजन स्वामी महाराज"],
+    ["HH Achyutananda Swami", "अच्युतानंद स्वामी महाराज"],
+    ["HH Krishna Kshetra Swami", "कृष्ण क्षेत्र स्वामी महाराज"],
+    ["HH Prabha Vishnu Swami", "प्रभा विष्णु स्वामी महाराज"],
+    ["HH Vishnu Jana Swami", "विष्णु जन स्वामी महाराज"],
+    ["HH Bhakti Bringa Govinda Swami", "भक्ति भृंग गोविंदा स्वामी महाराज"],
+    ["HH Kadamba Kanana Swami", "कदंब कनान स्वामी महाराज"],
+    ["HH Bhakti Bhusana Swami", "भक्ति भूषण स्वामी महाराज"],
+    ["HH Sivarama Swami", "शिवराम स्वामी महाराज"],
+    ["HH Sachinandana Swami", "सचिनंदन स्वामी महाराज"],
+    ["HH Bhakti Rasamrita Swami", "भक्ति रसामृत स्वामी महाराज"],
+    ["HG Aindra Prabhu", "ऐंद्रा प्रभु"],
+    ["HG Jai Sachinandana Prabhu", "जय सचिनंदन प्रभु"],
+    ["HG Jaysacinandana Prabhu (ACBSP)", "जय सचिनंदन प्रभु (श्रील प्रभुपाद)"],
+    ["HG Vaiyasaki Prabhu", "वैयसकि प्रभु"],
+    ["HG Vaisesika Prabhu", "वैशेषिक प्रभु"],
+    ["HG Swarupa Damodar Prabhu", "स्वरूप दामोदर प्रभु"],
+    ["HG Sivarama Prabhu", "शिवराम प्रभु"],
+    ["HG Ananta Nitai Prabhu", "अनंत निताई प्रभु"],
+    ["HG Saci Kumar Prabhu", "सचि कुमार प्रभू"],
+    ["HG Shiksastakam Prabhu", "शिक्षाष्टकम प्रभु"],
+    ["HG Agnidev Prabhu", "अग्निदेव प्रभु"],
+    ["HG Ganga Narayana Prabhu", "गंगा नारायण प्रभु"],
+    ["HG Govinda Prabhu", "गोविंदा प्रभु"],
+    ["HG Badahari Prabhu", "बदाहारी प्रभु"],
+    ["HG Krsna Kirtan Prabhu", "कृष्ण कीर्तन प्रभु"],
+    ["HG Sudarshan Prabhu", "सुदर्शन प्रभु"],
+    ["HG Balimardana Prabhu", "बालीमर्दन प्रभु"],
+    ["HG Gauranga Prabhu", "गौरांग प्रभु"],
+    ["HG Dina Bandhu Prabhu", "दीन बंधु प्रभु"],
+    ["HG Anandarupa Prabhu", "आनंदरूप प्रभु"],
+    ["HG Krsnabhishek Prabhu", "कृष्णभिषेक प्रभु"],
+    ["HG Gaur Gopal Prabhu", "गौर गोपाल प्रभु"],
+    ["HG Jay Vrindavan Prabhu", "जय वृंदावन प्रभु"],
+    ["HG Amarendra Prabhu", "अमरेंद्र प्रभु"],
+    ["HG Naru Gopal Prabhu", "नारु गोपाल प्रभु"],
+    ["HG Nityananda Prabhu", "नित्यानंद प्रभु"],
+    ["HG Vrindavan Prasad Prabhu", "वृंदावन प्रसाद प्रभु"],
+    ["HG Ananda Radhe Mataji", "आनंद राधे माताजी"],
+    ["HG Yamuna Mataji", "यमुना माताजी"],
+    ["HG Sarbani Mataji", "सर्वाणि माताजी"],
+    ["HG Sandhini Mataji", "संध्या माताजी"],
+    ["HG Ramya Mataji", "रम्या माताजी"],
+    ["HG Shravya Mataji", "श्रव्या माताजी"],
+    ["Kananbala Devi", "काननबाला देवी"],
+    ["Vaishnavas", "वैष्णव"],
+   ];
    for (let i in vtext) {
     let j = vtext[i].indexOf(",");
 
@@ -271,17 +303,19 @@ export function GlobalProvider({ children }) {
     let ind3t = ind3.split(/\r\n|\n/);
     let author = "";
     let offical = "";
+    let hauthor = "";
 
     ind3t.forEach((ele) => {
      if (ele.indexOf("Author") !== -1) {
       author = ele.slice(ele.indexOf("Author") + 8, ele.length);
      }
+     if (ele.indexOf("hauthor") !== -1) {
+      hauthor = ele.slice(ele.indexOf("hauthor") + 8, ele.length);
+     }
      if (ele.indexOf("Official Name") !== -1) {
       offical = ele.slice(ele.indexOf("Official Name") + 15, ele.length);
      }
     });
-
-    let ind2 = eindex + text.indexOf("Song Name", ind1 - eindex);
 
     if (j !== -1) {
      let p = Number(i) + 1;
@@ -296,6 +330,7 @@ export function GlobalProvider({ children }) {
 
        if (q !== -1) {
         let linkname = "";
+        let hlinkname = "";
         let linkaddress = "";
 
         for (let x = k + 5; x < q - 1; x++) {
@@ -304,16 +339,44 @@ export function GlobalProvider({ children }) {
         for (let y = q; y < vtext[p].length; y++) {
          linkaddress += vtext[p][y];
         }
-        links.push({ linkname: linkname, linkaddress: linkaddress });
+
+        for (let i = 0; i < hsingers.length; i++) {
+         if (linkname.indexOf(hsingers[i][0]) !== -1) {
+          hlinkname = linkname.replace(hsingers[i][0], hsingers[i][1]);
+          break;
+         }
+        }
+        links.push({ linkname: linkname, linkaddress: linkaddress, hlinkname: hlinkname });
        }
       }
       p++;
      }
 
      let b = vtext[p - 1].indexOf("book");
-     let book = b !== 1 ? vtext[p - 1].slice(5) : "";
+     let book = b !== -1 ? vtext[p - 1].slice(5) : "";
+     if (book) p++;
+     let h = vtext[p - 1].indexOf("hindi");
+     let hindi = h !== -1 ? vtext[p - 1].slice(6) : "";
 
-     etext.push({ name: dum, sindex: ind1, lindex: ind2 + 9, state: true, link: links, author: author, offical: offical, book: book, dflink: 0 });
+     let ind2 = hindi ? eindex + text.indexOf("Hindi", ind1 - eindex) : eindex + text.indexOf("Song Name", ind1 - eindex);
+     let hind1 = eindex + text.indexOf("Hindi", ind1 - eindex);
+     let hind2 = eindex + text.indexOf("Song Name", ind1 - eindex);
+
+     etext.push({
+      name: dum,
+      sindex: ind1,
+      lindex: ind2,
+      state: true,
+      link: links,
+      author: author,
+      offical: offical,
+      book: book,
+      dflink: 0,
+      hindi: hindi,
+      hsindex: hind1,
+      hlindex: hind2,
+      hauthor: hauthor,
+     });
     }
    }
 
@@ -667,7 +730,7 @@ export function GlobalProvider({ children }) {
 
  useEffect(() => {
   if (main3 !== "done") {
-   console.log(main2);
+   //  console.log(main2);
 
    setIte("SBbook", JSON.stringify(content2));
    if (main2 === 12) setMain3("done");
@@ -754,7 +817,7 @@ export function GlobalProvider({ children }) {
 
     let ind2 = i === vtext.length - 3 ? piskcon.scontent.length : ind3;
 
-    etext.push({ name: dum, sindex: ind1, lindex: ind2 + 9, link: link, offline: false });
+    etext.push({ name: dum, sindex: ind1, lindex: ind2, link: link, offline: false });
    }
 
    setpiskcon((prev) => {
@@ -768,7 +831,7 @@ export function GlobalProvider({ children }) {
 
  useEffect(() => {
   if (main5 !== "done") {
-   console.log(main4);
+   //  console.log(main4);
 
    setIte("Psongs", JSON.stringify(piskcon));
    if (main4 === 186) setMain5("done");
@@ -783,37 +846,39 @@ export function GlobalProvider({ children }) {
     <SearchBook.Provider value={searchBook}>
      <Scroll.Provider value={arr}>
       <Index.Provider value={[ind, setind]}>
-       <Playlist.Provider value={[playList, dispatch]}>
-        <Mediap.Provider value={[file, setFile]}>
-         <Medias.Provider value={[ppb, setPpb]}>
-          <Mediasn.Provider value={[song, setSong]}>
-           <Mediat.Provider value={[cposition, setCposition]}>
-            <Dplay.Provider value={[dplaylist, setDplaylist]}>
-             <BookMark.Provider value={[bookMark, dispatch2]}>
-              <Dbookmark.Provider value={[dbookmark, setDbookmark]}>
-               <Prog.Provider value={prog}>
-                <Tsize.Provider value={[tsize, setTize]}>
-                 <View.Provider value={[view, setView]}>
-                  <Colour.Provider value={[clr, setClr]}>
-                   <BookContent2.Provider value={content2}>
-                    <FontType.Provider value={[font, setFont]}>
-                     <Aos.Provider value={[aos, setAos]}>
-                      <Bplay.Provider value={[bplay, setBplay]}>{children}</Bplay.Provider>
-                     </Aos.Provider>
-                    </FontType.Provider>
-                   </BookContent2.Provider>
-                  </Colour.Provider>
-                 </View.Provider>
-                </Tsize.Provider>
-               </Prog.Provider>
-              </Dbookmark.Provider>
-             </BookMark.Provider>
-            </Dplay.Provider>
-           </Mediat.Provider>
-          </Mediasn.Provider>
-         </Medias.Provider>
-        </Mediap.Provider>
-       </Playlist.Provider>
+       <Mediap.Provider value={[file, setFile]}>
+        <Medias.Provider value={[ppb, setPpb]}>
+         <Mediasn.Provider value={[song, setSong]}>
+          <Mediat.Provider value={[cposition, setCposition]}>
+           <BookMark.Provider value={[bookMark, dispatch2]}>
+            <Dbookmark.Provider value={[dbookmark, setDbookmark]}>
+             <Prog.Provider value={prog}>
+              <Tsize.Provider value={[tsize, setTize]}>
+               <View.Provider value={[view, setView]}>
+                <Colour.Provider value={[clr, setClr]}>
+                 <BookContent2.Provider value={content2}>
+                  <FontType.Provider value={[font, setFont]}>
+                   <Aos.Provider value={[aos, setAos]}>
+                    <Controls.Provider value={[controls, setControls]}>
+                     <Bplay.Provider value={[bplay, setBplay]}>
+                      <Repeat.Provider value={[repeat, setRepeat]}>
+                       <Hindit.Provider value={[hindit, setHindi]}>{children}</Hindit.Provider>
+                      </Repeat.Provider>
+                     </Bplay.Provider>
+                    </Controls.Provider>
+                   </Aos.Provider>
+                  </FontType.Provider>
+                 </BookContent2.Provider>
+                </Colour.Provider>
+               </View.Provider>
+              </Tsize.Provider>
+             </Prog.Provider>
+            </Dbookmark.Provider>
+           </BookMark.Provider>
+          </Mediat.Provider>
+         </Mediasn.Provider>
+        </Medias.Provider>
+       </Mediap.Provider>
       </Index.Provider>
      </Scroll.Provider>
     </SearchBook.Provider>

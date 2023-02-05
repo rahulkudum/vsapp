@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import { useRouteMatch, useHistory, useLocation } from "react-router-dom";
 import { IonItem, IonLabel, IonNote, IonItemDivider, IonList, IonAccordion, IonAccordionGroup } from "@ionic/react";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import { Colour, FontType, IskconContent } from "../../global";
 
@@ -9,14 +9,13 @@ function AuthorFilter(props) {
  let history = useHistory();
  let { path, url } = useRouteMatch();
 
- let location = useLocation();
  const [font, setFont] = useContext(FontType);
  let fon;
  if (!font) fon = "Calibri";
  else fon = "Times New Roman";
  const [clr, setClr] = useContext(Colour);
  let color;
- if (clr) color = "#121212";
+ if (clr) color = "#181818";
  else color = "";
  let color2;
  if (clr) color2 = "#FFEB3B";
@@ -64,6 +63,7 @@ function AuthorFilter(props) {
         for (let j in iskcon.songs) {
          if (iskcon.songs[j].name === song) {
           nind = j;
+          break;
          }
         }
         return (
@@ -75,13 +75,12 @@ function AuthorFilter(props) {
            history.push(`${url}/songs/${iskcon.songs[nind].name}_${iskcon.songs[nind].book}`);
           }}
          >
-          <IonLabel style={{ fontFamily: `${fon}` }}>{song}</IonLabel>
-
-          {item.name === "Songs by Others" ? (
-           <IonNote style={{ fontFamily: `${fon}` }} color={!clr ? "dark" : "light"} mode="ios" slot="end">
-            {iskcon.songs[nind].author}
-           </IonNote>
-          ) : null}
+          <IonLabel style={{ fontFamily: `${fon}` }}>
+           <h2>{song}</h2>
+           {item.name === "Songs by Others" ? (
+            <p style={{ fontSize: "11px" }}>{iskcon.songs[nind].author !== "" ? iskcon.songs[nind].author : "Anonymous"}</p>
+           ) : null}
+          </IonLabel>
          </IonItem>
         );
        })}

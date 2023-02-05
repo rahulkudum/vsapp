@@ -1,6 +1,6 @@
 {
  "appId": "com.rahulkudum.vaisnava_songs",
- "appName": "Vaisnava Songs",
+ "appName": "Vaishnava Songs",
  "bundledWebRuntime": false,
  "npmClient": "npm",
  "webDir": "build",

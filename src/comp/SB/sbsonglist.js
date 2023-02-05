@@ -1,13 +1,15 @@
-import React, { useContext, useState, useRef, useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Colour, FontType } from "../global";
-import { IonItem, IonToolbar, IonItemDivider, IonLabel, IonButtons, IonButton, IonNote, IonSegment, IonSegmentButton } from "@ionic/react";
+import { IonItem, IonToolbar, IonItemDivider, IonLabel, IonSegment, IonSegmentButton } from "@ionic/react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { Storage } from "@capacitor/storage";
-import { ArrowBackSharp, QueueMusicSharp, MenuBookSharp, LibraryMusicSharp, CollectionsBookmarkSharp } from "@material-ui/icons";
+import { QueueMusicSharp, MenuBookSharp } from "@mui/icons-material";
 
 import { Switch, Route, useLocation, useRouteMatch, useHistory } from "react-router-dom";
 import SBP from "./sbsong";
-
+import { AutoStoriesSharp, PlayLessonSharp } from "@mui/icons-material";
+import SP from "../../sp.png";
 function SB() {
  let { path, url } = useRouteMatch();
 
@@ -38,7 +40,7 @@ function SB() {
  useEffect(() => {
   setTimeout(function () {
    if (location.pathname === url) window.scrollTo(0, spos);
-  }, 100);
+  }, 500);
  }, [location]);
 
  async function getItem(key) {
@@ -54,73 +56,72 @@ function SB() {
   });
  }, []);
 
- if (content.chap.length !== 0) {
-  return (
-   <>
-    <Switch location={location}>
-     <Route exact path={path}>
-      <div style={{ height: "58px" }}></div>
-      <IonToolbar color={clr ? "warning" : "primary"} className="ionhead">
-       <IonButtons slot="start" onClick={() => history.goBack()}>
-        <IonButton>
-         <ArrowBackSharp />
-        </IonButton>
-       </IonButtons>
-       <IonLabel style={{ fontFamily: `${fon}` }}> Prayers from Srimad Bhagavatam</IonLabel>
-      </IonToolbar>
-      {content.chap.map((part, i1) => {
-       return (
-        <div>
-         <IonItemDivider style={{ backgroundColor: `${color2}`, color: `${color3}`, fontSize: "16px" }}>
-          <IonLabel style={{ fontFamily: `${fon}` }}>{part.name}</IonLabel>
-         </IonItemDivider>
-
-         {content.chap[i1].song.map((td, i2) => {
+ return (
+  <AnimatePresence onExitComplete>
+   <Switch location={location}>
+    <Route exact path={path}>
+     <div style={{ height: "58px" }}></div>
+     <IonToolbar color={clr ? "warning" : "primary"} className="ionhead">
+      <IonLabel style={{ marginLeft: "10px", fontFamily: `${fon}` }}> Prayers from Srimad Bhagavatam</IonLabel>
+     </IonToolbar>
+     <motion.div exit={{ opacity: 0 }} animate={{ opacity: 1 }} initial={{ opacity: 0 }} transition={{ type: "linear", duration: 1 }}>
+      {content.chap.length !== 0
+       ? content.chap.map((part, i1) => {
           return (
-           <IonItem
-            color={clr}
-            button
-            onClick={() => {
-             setSpos(window.scrollY);
-             history.push(`${url}/${i1}_${i2}`);
-            }}
-           >
-            <IonLabel style={{ fontSize: "14px", fontFamily: `${fon}` }}>{td.name.slice(0, td.name.indexOf("(SB"))}</IonLabel>
-            <IonNote style={{ fontFamily: `${fon}` }} color={!clr ? "dark" : "light"} mode="ios" slot="end">
-             {td.name.slice(td.name.indexOf("(SB"))}
-            </IonNote>
-           </IonItem>
+           <div>
+            <IonItemDivider style={{ backgroundColor: `${color2}`, color: `${color3}`, fontSize: "16px" }}>
+             <IonLabel style={{ fontFamily: `${fon}` }}>{part.name}</IonLabel>
+            </IonItemDivider>
+
+            {content.chap[i1].song.map((td, i2) => {
+             return (
+              <IonItem
+               color={clr}
+               button
+               onClick={() => {
+                setSpos(window.scrollY);
+                history.push(`${url}/${i1}_${i2}`);
+               }}
+              >
+               <IonLabel style={{ fontFamily: `${fon}` }}>
+                <h2>{td.name.slice(0, td.name.indexOf("(SB"))}</h2>
+                <p style={{ fontSize: "11px" }}>{td.name.slice(td.name.indexOf("(SB"))}</p>
+               </IonLabel>
+              </IonItem>
+             );
+            })}
+           </div>
           );
-         })}
-        </div>
-       );
-      })}
-     </Route>
-     <Route path={`${path}/:ind`}>
-      <SBP SBbook={content} />
-     </Route>
-    </Switch>
-    <IonToolbar className="tab" color={clr ? "warning" : "primary"}>
-     <IonSegment>
-      <IonSegmentButton onClick={() => history.push("/iskcon")}>
-       <QueueMusicSharp />
-      </IonSegmentButton>
-      <IonSegmentButton onClick={() => history.push("/topics")}>
-       <MenuBookSharp />
-      </IonSegmentButton>
-      <IonSegmentButton onClick={() => history.push("/playlist")}>
-       <LibraryMusicSharp />
-      </IonSegmentButton>
-      <IonSegmentButton onClick={() => history.push("/bookmarks")}>
-       <CollectionsBookmarkSharp />
-      </IonSegmentButton>
-     </IonSegment>
-    </IonToolbar>
-   </>
-  );
- } else {
-  return null;
- }
+         })
+       : null}
+     </motion.div>
+    </Route>
+    <Route path={`${path}/:ind`}>
+     <SBP SBbook={content} />
+    </Route>
+   </Switch>
+   <div style={{ height: "56px" }}></div>
+   <IonToolbar className="tab" color={clr ? "warning" : "primary"}>
+    <IonSegment value="default">
+     <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/iskcon")}>
+      <QueueMusicSharp />
+     </IonSegmentButton>
+     <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/topics")}>
+      <MenuBookSharp />
+     </IonSegmentButton>
+     <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/sp")}>
+      <img src={SP} style={{ height: "40px" }} />
+     </IonSegmentButton>
+     <IonSegmentButton value="default" style={{ minWidth: 0 }} onClick={() => history.push("/sb")}>
+      <AutoStoriesSharp />
+     </IonSegmentButton>
+     <IonSegmentButton style={{ minWidth: 0 }} onClick={() => history.push("/bookmarks")}>
+      <PlayLessonSharp />
+     </IonSegmentButton>
+    </IonSegment>
+   </IonToolbar>
+  </AnimatePresence>
+ );
 }
 
 export default SB;
